@@ -9,22 +9,13 @@ from termcolor import colored
 from pyccsi.parser import Parser, Resource, STATUS
 from pyccsi.schema import JsonCCSISchema, Tag, Attrib
 
-# helper func
-def create_fld_if_not_exist(path: Path):
-    if not path.exists():
-        path.mkdir(parents=True, exist_ok=True)
-
-# constants
-# BASE_URL = "http://185.226.13.104"
-BASE_URL = "http://localhost:5000"
-
 
 class CCSIRequester(BaseModel):
-    host_url: HttpUrl
+    host_url: str
     resource: str
     params: Optional[Union[dict, BaseModel]]
-    schemas: Type[JsonCCSISchema]
-    parser: Parser
+    schemas: Type[JsonCCSISchema] = JsonCCSISchema
+    parser: Parser = Field(default_factory=Parser)
     records: List[Resource] = Field(default_factory=list)
 
     @validator('params', pre=True)
@@ -67,7 +58,7 @@ class CCSIRequester(BaseModel):
         self.get_next(feed)
 
     def send_request(self):
-        response = get(url=f"{self.base_url}/{self.resource}/json/search?", params=self.params)
+        response = get(url=f"{self.host_url}/{self.resource}/json/search?", params=self.params)
         print(response.url)
         if response.status_code != 200:
             raise Exception(f"ccsi request {response.url} failed")
