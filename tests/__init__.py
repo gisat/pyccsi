@@ -9,8 +9,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime as dt
 from pydantic import BaseModel, Field, validator
 
-from pyccsi import CCSIRequester, Downloader
-from pyccsi.schema import JsonCCSISchema
+from pyccsi import CCSIDownloader
 
 
 def create_fld_if_not_exist(path: Path):
@@ -154,13 +153,9 @@ if __name__ == "__main__":
             extra_params["timeStart"] = str(new_start_date.date())
         params = RESOURCES.get(resource)(**extra_params)
 
-        requester = CCSIRequester(resource=resource, params=params, host_url="http://localhost:5000")
-        resource_data = requester.run()
-
-        # download
-        downloader = Downloader(pool=resource_data, path=output_directory, sleep=8*60, timeout=12*60, max_worker=1)
-        downloader.run()
-
+        ccsi = CCSIDownloader(host_url="http://localhost:5000")
+        ccsi.send_request(resource=resource, params=params)
+        ccsi.download(path=output_directory)
 
 
     end = time()
