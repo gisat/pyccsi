@@ -6,7 +6,7 @@ from typing import Optional, List, Union, Type
 from pathlib import Path
 from termcolor import colored
 
-from pyccsi.parser import Parser, Resource, STATUS
+from pyccsi.parser import Parser, Records, STATUS
 from pyccsi.schema import JsonCCSISchema, Tag, Attrib
 
 
@@ -16,7 +16,7 @@ class CCSIRequester(BaseModel):
     params: Optional[Union[dict, BaseModel]]
     schemas: Type[JsonCCSISchema] = JsonCCSISchema
     parser: Parser = Field(default_factory=Parser)
-    records: List[Resource] = Field(default_factory=list)
+    records: List[Records] = Field(default_factory=list)
 
     @validator('params', pre=True)
     def set_params(cls, value):
@@ -32,9 +32,10 @@ class CCSIRequester(BaseModel):
         else:
             return value
 
-    def run(self) -> List[Resource]:
+    def run(self) -> List[Records]:
         response = self.send_request()
         feed = self.parse_response(response)
+
         self.parse_feed(feed)
         self.get_next(feed)
         return self.records
@@ -68,13 +69,13 @@ class CCSIRequester(BaseModel):
         arbitrary_types_allowed = True
 
 
-def request_resource(resource: Resource) -> Resource:
+def request_resource(resource: Records) -> Records:
     print(f' {resource.index} requested from {resource.link}')
     resource.response = get(resource.link, allow_redirects=True, stream=True)
     return resource
 
 
-def resolve_status(resource: Resource) -> Resource:
+def resolve_status(resource: Records) -> Records:
 
     if resource.response.status_code == 200:
         print(colored(f' {resource.index} requested from {resource.link} : data ready', 'green'))
@@ -92,7 +93,7 @@ def resolve_status(resource: Resource) -> Resource:
     return resource
 
 
-def download(path: Path, resource: Resource):
+def download(path: Path, resource: Records):
     print(colored(f' {resource.index} requested from {resource.title} : data download start', 'green'))
     with open(path / resource.title, 'wb') as fd:
         fd.write(resource.response.content)
@@ -103,7 +104,7 @@ def download(path: Path, resource: Resource):
 
 
 class Downloader(BaseModel):
-    pool: List[Resource]
+    pool: List[Records]
     path: Path
     sleep: int = Field(default=200)
     sleep_step: int = Field(default=5)
@@ -118,7 +119,7 @@ class Downloader(BaseModel):
         for resource in self.pool:
             self.request_data(resource)
 
-    def request_data(self, resource: Resource) ->None:
+    def request_data(self, resource: Records) ->None:
         time = 0
         while resource.status in [STATUS.PENDING, STATUS.TOO_MUCH_REQUESTS] or time <= self.timeout:
             request_resource(resource)

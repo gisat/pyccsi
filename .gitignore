@@ -1,3 +1,5 @@
 /venv/
 /publish.sh
 /tests/
+/dist/
+/build/

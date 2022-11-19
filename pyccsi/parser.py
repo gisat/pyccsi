@@ -15,7 +15,7 @@ class STATUS(Enum):
     TOO_MUCH_REQUESTS = 4
 
 
-class Resource(BaseModelSetter):
+class Records(BaseModelSetter):
     link: Optional[str]
     title: Optional[Union[str, UUID]]
     response: Optional[Response] = Field(default=None)
@@ -34,7 +34,7 @@ class Resource(BaseModelSetter):
 
 class Parser:
 
-    def __call__(self, feeds: JsonCCSISchema) -> List[Resource]:
+    def __call__(self, feeds: JsonCCSISchema) -> List[Records]:
         resources = []
         for index, entry in enumerate(feeds):
             link, title = None, None
@@ -43,6 +43,6 @@ class Parser:
                     link = tag.attrib.href
                 elif tag.tag == 'title':
                     title = tag.text
-            resources.append(Resource(link=link, title=title, index=index))
+            resources.append(Records(link=link, title=title, index=index))
 
         return resources
