@@ -1,0 +1,2 @@
+[tool.pydantic-pycharm-plugin]
+ignore-init-method-arguments = true
